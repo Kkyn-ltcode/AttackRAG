@@ -1,10 +1,40 @@
-1. Your biggest unresolved problem: ground truth for hallucinations.
-You claim "90%+ hallucination reduction" — but how do you measure hallucination ground truth? To evaluate GI, you need to know which claims actually are hallucinated. CICIDS/DARPA TC give you attack ground truth, not claim-level annotation. This is the question a S&P reviewer will ask first. You need a concrete answer before Checkpoint #1.
-2. Contribution 3 is thin as stated.
-"GI naturally degrades under poisoning" is an observation, not a defense. GRAGPOISON authors could read this and say "we already implied this." You need a stronger defensive story — perhaps a provenance-weighted GI variant that's explicitly resistant, not just sensitive to poisoning.
-3. High GI ≠ Accurate.
-A claim can be fully grounded in ATT&CK and still be wrong for the specific alert. MITRE ATT&CK describes TTPs at a general level — it doesn't validate that this specific alert maps to this specific technique. Reviewers will push on whether GI measures "grounded in KG" versus "factually correct about the incident." These are different things and your paper needs to clearly acknowledge and bound this.
-4. The 4-agent pipeline is table stakes.
-LangChain + Neo4j + CYPHER queries is implementation, not contribution. The pipeline only matters insofar as it demonstrates GI in practice. Make sure your writing never lets the system overshadow the framework — the framing document does this well, but papers have a way of drifting toward implementation detail.
-5. "Nobody has answered this question" is a liability.
-Strong claim. One missed paper in your related work and a reviewer will reject on credibility alone. You need an exhaustive search, not just the papers listed here.
+1. Hallucination ground truth — you're right, this is the #1 risk.
+
+We can't just "check if a claim is hallucinated" without knowing what the truth is. Here's the concrete solution:
+
+We construct claim-level ground truth from the dataset labels we already have:
+
+DARPA TC tells us: "Alert X was caused by attack scenario Y, which used techniques A, B, C"
+CICIDS tells us: "This flow is a DDoS attack" or "This flow is benign"
+We feed the alert to the system, extract every claim it makes, then check each claim against the known ground truth
+Example: System says "This alert indicates T1059.001, likely APT29." Ground truth says the DARPA TC scenario was a Drakon APT simulation. The T1059.001 mapping might be correct (grounded AND accurate), but the APT29 attribution is hallucinated (grounded in ATT&CK — APT29 does use T1059.001 — but wrong for this specific incident). This gives us claim-level labels.
+
+We can also create synthetic hallucination tests: deliberately test alerts where we KNOW the answer and count fabricated details the LLM adds.
+
+This needs to be designed BEFORE we build the pipeline. I'll add a ground truth annotation spec to the plan.
+
+2. Contribution 3 — agreed, it's thin.
+
+"GI degrades under poisoning" is a thermometer reading, not a medicine. We need an active defense. Concrete proposal:
+
+Provenance-Anchored GI: Every KG edge carries an immutable provenance tag (MITRE-official vs. community vs. auto-ingested). When computing GI, we don't just score relevance — we require that at least one supporting path passes exclusively through MITRE-official edges. Poisoned edges (which can only enter via lower-trust channels) can never fully ground a claim by themselves. This is a structural guarantee, not just a score adjustment.
+
+3. High GI ≠ Accurate — the sharpest concern.
+
+You're absolutely right. GI measures "is this claim supported by the knowledge base?" not "is this claim true for this specific incident?"
+
+The honest answer: GI is necessary but not sufficient for correctness. We need to clearly define two metrics:
+
+GI = groundedness (does the KG support this claim?)
+Triage accuracy = correctness (is the final verdict right?)
+The paper must explicitly say: "A high-GI claim that is grounded but incorrectly applied to the specific alert is a reasoning error, not a hallucination. GI eliminates fabricated claims; triage accuracy measures correct application of grounded knowledge."
+
+This distinction actually strengthens the paper — it shows intellectual honesty that reviewers respect.
+
+4. Pipeline is table stakes — agreed.
+
+Writing discipline. The rule: every paragraph about the pipeline must connect back to GI. "Agent 2 generates CYPHER queries" is boring. "Agent 2 generates CYPHER queries to produce the grounding paths that GI requires for claim verification" connects to the contribution.
+
+5. "Nobody has answered this" — fair.
+
+I'll tone it down. Replace with: "To our knowledge, no prior work has formalized..." and do an exhaustive search before Checkpoint #1. If we find a competing paper, we differentiate rather than claim first-mover.
