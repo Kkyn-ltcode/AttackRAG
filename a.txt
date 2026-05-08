@@ -1,0 +1,10 @@
+1. Your biggest unresolved problem: ground truth for hallucinations.
+You claim "90%+ hallucination reduction" — but how do you measure hallucination ground truth? To evaluate GI, you need to know which claims actually are hallucinated. CICIDS/DARPA TC give you attack ground truth, not claim-level annotation. This is the question a S&P reviewer will ask first. You need a concrete answer before Checkpoint #1.
+2. Contribution 3 is thin as stated.
+"GI naturally degrades under poisoning" is an observation, not a defense. GRAGPOISON authors could read this and say "we already implied this." You need a stronger defensive story — perhaps a provenance-weighted GI variant that's explicitly resistant, not just sensitive to poisoning.
+3. High GI ≠ Accurate.
+A claim can be fully grounded in ATT&CK and still be wrong for the specific alert. MITRE ATT&CK describes TTPs at a general level — it doesn't validate that this specific alert maps to this specific technique. Reviewers will push on whether GI measures "grounded in KG" versus "factually correct about the incident." These are different things and your paper needs to clearly acknowledge and bound this.
+4. The 4-agent pipeline is table stakes.
+LangChain + Neo4j + CYPHER queries is implementation, not contribution. The pipeline only matters insofar as it demonstrates GI in practice. Make sure your writing never lets the system overshadow the framework — the framing document does this well, but papers have a way of drifting toward implementation detail.
+5. "Nobody has answered this question" is a liability.
+Strong claim. One missed paper in your related work and a reviewer will reject on credibility alone. You need an exhaustive search, not just the papers listed here.
