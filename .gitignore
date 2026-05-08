@@ -1,0 +1,15 @@
+# Downloaded data (large files)
+data/raw/
+# Neo4j database files
+neo4j_data/
+# Experiment outputs
+experiments/results/
+# Python
+__pycache__/
+*.pyc
+.eggs/
+*.egg-info/
+# Environment
+.env
+# OS
+.DS_Store

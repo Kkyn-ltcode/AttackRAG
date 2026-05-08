@@ -1,0 +1,12 @@
+# Phase 1: Knowledge Graph construction
+neo4j==5.27.0
+# STIX2 for parsing MITRE ATT&CK data
+stix2==3.0.1
+# HTTP requests for NVD API
+requests>=2.31.0
+# Data processing
+pandas>=2.0.0
+# Configuration
+pyyaml>=6.0
+# Progress bars
+tqdm>=4.65.0
