@@ -1,40 +1,5 @@
-1. Hallucination ground truth — you're right, this is the #1 risk.
+1. The DARPA TC + CICIDS approach works for technique-level labels (T1059.001 correct/wrong). That's solid. The synthetic hallucination tests are also good practice.
+The gap is APT attribution claims. Your own example exposes it — "APT29 attribution is hallucinated but grounded in ATT&CK." DARPA TC scenario labels won't reliably tell you which actor attribution claims are wrong, because the simulations don't always map cleanly to named threat actors. If your system makes actor-level claims, you need a principled way to label those as correct or incorrect, otherwise that claim category either gets excluded from evaluation or gets hand-waved.
+The concrete question you need to answer before building: Will you evaluate actor attribution claims, and if so, what's the labeling source? The cleanest solution is to simply scope GI evaluation to technique-level claims (where DARPA TC gives clean labels) and explicitly state actor attribution is out of scope for this paper. That's not a weakness — it's honest scoping.
 
-We can't just "check if a claim is hallucinated" without knowing what the truth is. Here's the concrete solution:
-
-We construct claim-level ground truth from the dataset labels we already have:
-
-DARPA TC tells us: "Alert X was caused by attack scenario Y, which used techniques A, B, C"
-CICIDS tells us: "This flow is a DDoS attack" or "This flow is benign"
-We feed the alert to the system, extract every claim it makes, then check each claim against the known ground truth
-Example: System says "This alert indicates T1059.001, likely APT29." Ground truth says the DARPA TC scenario was a Drakon APT simulation. The T1059.001 mapping might be correct (grounded AND accurate), but the APT29 attribution is hallucinated (grounded in ATT&CK — APT29 does use T1059.001 — but wrong for this specific incident). This gives us claim-level labels.
-
-We can also create synthetic hallucination tests: deliberately test alerts where we KNOW the answer and count fabricated details the LLM adds.
-
-This needs to be designed BEFORE we build the pipeline. I'll add a ground truth annotation spec to the plan.
-
-2. Contribution 3 — agreed, it's thin.
-
-"GI degrades under poisoning" is a thermometer reading, not a medicine. We need an active defense. Concrete proposal:
-
-Provenance-Anchored GI: Every KG edge carries an immutable provenance tag (MITRE-official vs. community vs. auto-ingested). When computing GI, we don't just score relevance — we require that at least one supporting path passes exclusively through MITRE-official edges. Poisoned edges (which can only enter via lower-trust channels) can never fully ground a claim by themselves. This is a structural guarantee, not just a score adjustment.
-
-3. High GI ≠ Accurate — the sharpest concern.
-
-You're absolutely right. GI measures "is this claim supported by the knowledge base?" not "is this claim true for this specific incident?"
-
-The honest answer: GI is necessary but not sufficient for correctness. We need to clearly define two metrics:
-
-GI = groundedness (does the KG support this claim?)
-Triage accuracy = correctness (is the final verdict right?)
-The paper must explicitly say: "A high-GI claim that is grounded but incorrectly applied to the specific alert is a reasoning error, not a hallucination. GI eliminates fabricated claims; triage accuracy measures correct application of grounded knowledge."
-
-This distinction actually strengthens the paper — it shows intellectual honesty that reviewers respect.
-
-4. Pipeline is table stakes — agreed.
-
-Writing discipline. The rule: every paragraph about the pipeline must connect back to GI. "Agent 2 generates CYPHER queries" is boring. "Agent 2 generates CYPHER queries to produce the grounding paths that GI requires for claim verification" connects to the contribution.
-
-5. "Nobody has answered this" — fair.
-
-I'll tone it down. Replace with: "To our knowledge, no prior work has formalized..." and do an exhaustive search before Checkpoint #1. If we find a competing paper, we differentiate rather than claim first-mover.
+2. Your Provenance-Anchored GI requires every KG edge to carry an immutable provenance tag at ingestion time. This means your KG construction pipeline becomes a trust boundary — and that design needs to be specified upfront. If you're auto-ingesting CVE or community threat intel feeds, the provenance classification logic matters. A reviewer could ask: "What stops an attacker from spoofing provenance metadata at ingestion?" You don't need to solve this fully, but you need one paragraph in the paper acknowledging it as a threat model boundary.
