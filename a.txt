@@ -1,5 +1,17 @@
-1. The DARPA TC + CICIDS approach works for technique-level labels (T1059.001 correct/wrong). That's solid. The synthetic hallucination tests are also good practice.
-The gap is APT attribution claims. Your own example exposes it — "APT29 attribution is hallucinated but grounded in ATT&CK." DARPA TC scenario labels won't reliably tell you which actor attribution claims are wrong, because the simulations don't always map cleanly to named threat actors. If your system makes actor-level claims, you need a principled way to label those as correct or incorrect, otherwise that claim category either gets excluded from evaluation or gets hand-waved.
-The concrete question you need to answer before building: Will you evaluate actor attribution claims, and if so, what's the labeling source? The cleanest solution is to simply scope GI evaluation to technique-level claims (where DARPA TC gives clean labels) and explicitly state actor attribution is out of scope for this paper. That's not a weakness — it's honest scoping.
+1. Actor attribution — agreed, scope it out.
 
-2. Your Provenance-Anchored GI requires every KG edge to carry an immutable provenance tag at ingestion time. This means your KG construction pipeline becomes a trust boundary — and that design needs to be specified upfront. If you're auto-ingesting CVE or community threat intel feeds, the provenance classification logic matters. A reviewer could ask: "What stops an attacker from spoofing provenance metadata at ingestion?" You don't need to solve this fully, but you need one paragraph in the paper acknowledging it as a threat model boundary.
+You're right that DARPA TC scenarios don't map cleanly to named threat actors. The clean decision:
+
+In scope for GI evaluation: technique-level claims (T1059.001), tactic-level claims (TA0002 Execution), CVE references, and D3FEND recommendations — all have verifiable ground truth from DARPA TC labels + KG structure.
+Out of scope: actor/group attribution claims (APT29, Lazarus Group, etc.)
+In the paper: "We scope GI evaluation to technique-level and mitigation-level claims, where DARPA TC scenario labels provide clean ground truth. Actor attribution verification requires threat intelligence provenance beyond the scope of this work."
+This actually tightens the paper. One well-evaluated claim category beats four poorly-evaluated ones.
+
+2. Provenance spoofing — agreed, acknowledge as threat model boundary.
+
+The honest position:
+
+MITRE ATT&CK and NVD are editorially curated by US government agencies (MITRE Corporation, NIST). We treat these as trusted by definition — the same trust assumption every IDS paper makes when using CVE data.
+Community/auto-ingested feeds are explicitly lower-trust in our provenance scheme. That's the whole point of the trust score.
+We do NOT claim to detect provenance spoofing at ingestion time. If an attacker compromises the KG ingestion pipeline itself, that's outside our threat model.
+One paragraph in §3 (Threat Model): "We assume the integrity of upstream knowledge bases (MITRE ATT&CK, NVD). Compromising these sources requires subverting their editorial processes, which we consider out of scope. For lower-trust sources, Provenance-Anchored GI limits their influence by construction."
